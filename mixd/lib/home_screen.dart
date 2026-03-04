@@ -89,41 +89,60 @@ class FeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Demo data for now – you can wire this to Supabase later.
+    final demoItems = List.generate(
+      10,
+      (i) => (
+        title: 'Mixtape #${i + 1}',
+        artist: '@creator_name',
+        // Replace with a real URL or asset path when you hook up the backend.
+        source: 'assets/audio/sample.mp3',
+      ),
+    );
+
     return PageView.builder(
       scrollDirection: Axis.vertical,
-      itemCount: 10,
+      itemCount: demoItems.length,
       itemBuilder: (context, index) {
+        final item = demoItems[index];
+
         return Stack(
           fit: StackFit.expand,
           children: [
-            // Video Placeholder background
-            Container(color: Colors.black12),
+            // Background gradient to keep the TikTok-style feel.
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withAlpha(51),
-                    Colors.transparent,
-                    Colors.black.withAlpha(153),
+                    Color(0xFF000000),
+                    Color(0xFF0A0A1A),
+                    Color(0xFF1A1A2E),
                   ],
                 ),
               ),
             ),
+
+            // Centered cassette-style card similar to the Walkman screen.
             Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.play_circle_outline, size: 80, color: Colors.white54),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Mix #${index + 1}',
-                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ],
+              child: _FeedCassetteCard(
+                title: item.title,
+                artist: item.artist,
+                onTapPlay: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => WalkmanPlayerScreen(
+                        filePath: item.source,
+                        title: item.title,
+                        artist: item.artist,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
+
             // Right Sidebar actions
             Positioned(
               right: 20,
@@ -136,6 +155,7 @@ class FeedScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             // Bottom Info
             Positioned(
               left: 20,
@@ -143,9 +163,18 @@ class FeedScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('@creator_name', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text(
+                    '@creator_name',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Check out this custom mix... #music #mixd', style: GoogleFonts.outfit(color: Colors.white70)),
+                  Text(
+                    'Check out this custom mix... #music #mixd',
+                    style: GoogleFonts.outfit(color: Colors.white70),
+                  ),
                 ],
               ),
             ),
@@ -162,7 +191,200 @@ class FeedScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 35, color: Colors.white70),
           const SizedBox(height: 5),
-          Text(label, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12)),
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              color: Colors.white70,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Cassette-style card for the feed, visually aligned with the Walkman screen.
+class _FeedCassetteCard extends StatelessWidget {
+  const _FeedCassetteCard({
+    required this.title,
+    required this.artist,
+    required this.onTapPlay,
+  });
+
+  final String title;
+  final String artist;
+  final VoidCallback onTapPlay;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return FractionallySizedBox(
+      widthFactor: 0.9,
+      heightFactor: 0.55,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEE8D5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF4A4A4A), width: 3),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black38,
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(17),
+          child: Column(
+            children: [
+              // Top label area (title + artist)
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Colors.black12, width: 1),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontSize: 18,
+                        color: Colors.black87,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      artist,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Color stripe
+              SizedBox(
+                height: 16,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: const [
+                    Expanded(
+                      child: ColoredBox(color: Color(0xFFE57373)),
+                    ),
+                    Expanded(
+                      child: ColoredBox(color: Color(0xFFFFB74D)),
+                    ),
+                    Expanded(
+                      child: ColoredBox(color: Color(0xFF64B5F6)),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Middle area with reels + play button (static reels)
+              Expanded(
+                child: Container(
+                  color: const Color(0xFFD5D0BC),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Center(child: _StaticReel()),
+                      ),
+                      GestureDetector(
+                        onTap: onTapPlay,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF263238),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(77),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            size: 34,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const Expanded(
+                        child: Center(child: _StaticReel()),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StaticReel extends StatelessWidget {
+  const _StaticReel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF263238),
+        border: Border.all(color: Colors.white70, width: 2),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          for (int i = 0; i < 4; i++)
+            Transform.rotate(
+              angle: i * (3.1415926535 / 2),
+              child: Container(
+                width: 32,
+                height: 3,
+                color: Colors.white38,
+              ),
+            ),
+          Container(
+            width: 12,
+            height: 12,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );
