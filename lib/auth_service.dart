@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -25,14 +26,14 @@ class AuthService {
         // MOBILE FLOW: Use native Google Sign-In
         final GoogleSignIn googleSignIn = GoogleSignIn.instance;
 
-        const webClientId = '214249329097-u3l2f7tpkat618lb28ck4fmqf0ib0b22.apps.googleusercontent.com';
-        const iosClientId = '214249329097-4q242msfso6b852bjngvhs8fg4gf6751.apps.googleusercontent.com';
+        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']!;
+        final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID']!;
 
         await googleSignIn.initialize(
           clientId: iosClientId,
           serverClientId: webClientId,
         );
-        
+
         final googleUser = await googleSignIn.authenticate();
 
         final googleAuth = googleUser.authentication;
@@ -62,14 +63,14 @@ class AuthService {
         // Ensure initialization before calling sign-out
         final GoogleSignIn googleSignIn = GoogleSignIn.instance;
         
-        const webClientId = '214249329097-u3l2f7tpkat618lb28ck4fmqf0ib0b22.apps.googleusercontent.com';
-        const iosClientId = '214249329097-4q242msfso6b852bjngvhs8fg4gf6751.apps.googleusercontent.com';
+        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']!;
+        final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID']!;
 
         await googleSignIn.initialize(
           clientId: iosClientId,
           serverClientId: webClientId,
         );
-        
+
         await googleSignIn.signOut();
       }
       

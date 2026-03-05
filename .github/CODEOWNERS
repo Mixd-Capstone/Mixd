@@ -1,0 +1,3 @@
+# Automatically request review from all contributors on every PR
+# Replace these with the actual GitHub usernames of your team members
+* @Mixd-Capstone/contributors
