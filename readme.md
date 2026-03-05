@@ -86,7 +86,7 @@ The `.env.example` file shows which variables are needed:
 - `SUPABASE_URL` — Supabase project URL
 - `SUPABASE_ANON_KEY` — Supabase anonymous key
 - `GOOGLE_WEB_CLIENT_ID` — Google OAuth web client ID
-- `GOOGLE_IOS_CLIENT_ID` — Google OAuth iOS client ID
+- `GOOGLE_IOS_CLIENT_ID` — Google OAuth iOS client ID (must also match the URL scheme in `ios/Runner/Info.plist`)
 - `MIXD_API_KEY` — Mixd song download API key
 
 ## Branch Conventions
