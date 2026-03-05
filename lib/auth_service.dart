@@ -26,8 +26,11 @@ class AuthService {
         // MOBILE FLOW: Use native Google Sign-In
         final GoogleSignIn googleSignIn = GoogleSignIn.instance;
 
-        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']!;
-        final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID']!;
+        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+        final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'];
+        if (webClientId == null || iosClientId == null) {
+          throw Exception('Missing GOOGLE_WEB_CLIENT_ID or GOOGLE_IOS_CLIENT_ID in .env');
+        }
 
         await googleSignIn.initialize(
           clientId: iosClientId,
@@ -63,15 +66,17 @@ class AuthService {
         // Ensure initialization before calling sign-out
         final GoogleSignIn googleSignIn = GoogleSignIn.instance;
         
-        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']!;
-        final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID']!;
-
-        await googleSignIn.initialize(
-          clientId: iosClientId,
-          serverClientId: webClientId,
-        );
-
-        await googleSignIn.signOut();
+        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+        final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'];
+        if (webClientId == null || iosClientId == null) {
+          debugPrint('Missing Google client IDs in .env, skipping Google sign-out');
+        } else {
+          await googleSignIn.initialize(
+            clientId: iosClientId,
+            serverClientId: webClientId,
+          );
+          await googleSignIn.signOut();
+        }
       }
       
       // Sign out from Supabase (Web and Mobile)
