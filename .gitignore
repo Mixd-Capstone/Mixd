@@ -1,3 +1,6 @@
+# Environment variables
+.env
+
 # Miscellaneous
 *.class
 *.log
@@ -27,11 +30,17 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+
+# Generated plugin registrants
+**/generated_plugin_registrant.*
+**/GeneratedPluginRegistrant.*
+**/generated_plugins.cmake
 
 # Symbolication related
 app.*.symbols

@@ -72,12 +72,22 @@ flutter build web
 flutter build windows
 ```
 
-## Auth Setup
+## Environment Setup
 
-The app uses Google Sign-In through Supabase. OAuth client IDs are configured in:
-- `lib/main.dart` — Supabase project URL and anon key
-- `lib/auth_service.dart` — Google client IDs (iOS and web)
-- `ios/Runner/Info.plist` — URL scheme for iOS deep linking
+This project uses a `.env` file for client config. It is **not** committed to git.
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+2. Fill in the values (get them from a teammate)
+
+The `.env.example` file shows which variables are needed:
+- `SUPABASE_URL` — Supabase project URL
+- `SUPABASE_ANON_KEY` — Supabase anonymous key
+- `GOOGLE_WEB_CLIENT_ID` — Google OAuth web client ID
+- `GOOGLE_IOS_CLIENT_ID` — Google OAuth iOS client ID (must also match the URL scheme in `ios/Runner/Info.plist`)
+- `MIXD_API_KEY` — Mixd song download API key
 
 ## Branch Conventions
 
@@ -92,4 +102,7 @@ Always branch off `main`, open a PR, get it reviewed, then merge.
 
 ## Team
 
-Built by the Mixd Capstone team.
+- [@Shreyan9](https://github.com/Shreyan9)
+- [@atkinsonl477](https://github.com/atkinsonl477)
+- [@camdenbalberg](https://github.com/camdenbalberg)
+- [@DiegoLandaeta03](https://github.com/DiegoLandaeta03)
