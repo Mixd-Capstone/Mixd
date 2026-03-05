@@ -74,7 +74,7 @@ flutter build windows
 
 ## Environment Setup
 
-This project uses a `.env` file for secrets. It is **not** committed to git.
+This project uses a `.env` file for client config. It is **not** committed to git.
 
 1. Copy the example file:
    ```bash
