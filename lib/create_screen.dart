@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'mixtape_editor_screen.dart';
 
 // 3. Plus/Create Page
 class CreateScreen extends StatefulWidget {
@@ -359,7 +360,38 @@ class _CreateScreenState extends State<CreateScreen> {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: _selectedIndexes.isEmpty ? null : () {},
+                    onPressed: _selectedIndexes.isEmpty
+                        ? null
+                        : () async {
+                            // Ensure any preview audio stops when moving
+                            // into the mixtape creation screen.
+                            _previewTimer?.cancel();
+                            await _audioPlayer.stop();
+
+                            final selectedSongs = _selectedIndexes
+                                .map((index) => _songs[index])
+                                .map(
+                                  (song) => {
+                                    'id': song.id,
+                                    'title': song.title,
+                                    'artist': song.artist,
+                                    'albumArtUrl': song.albumArtUrl,
+                                    'fileKey': song.fileKey,
+                                    'durationSeconds': song.durationSeconds,
+                                  },
+                                )
+                                .toList();
+
+                            if (!context.mounted) return;
+
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => MixtapeEditorScreen(
+                                  songs: selectedSongs,
+                                ),
+                              ),
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,
