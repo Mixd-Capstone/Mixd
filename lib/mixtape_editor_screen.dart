@@ -128,9 +128,10 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
     );
   }
 
+  /// Fetches fresh signed URLs for all clips. Signed URLs expire after 5 minutes,
+  /// so we always refetch before playing to avoid playback failing "after a while".
   Future<void> _ensureUrls() async {
     for (final clip in _clips) {
-      if (clip.url != null) continue;
       final url = await _buildSongUrl(clip);
       clip.url = url;
     }
@@ -228,6 +229,38 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
         _singleSongIndex = null;
       });
     }
+  }
+
+  void _enterZoomForClip(int index) {
+    if (index < 0 || index >= _clips.length) return;
+    final clip = _clips[index];
+    final fullMax = clip.originalDurationSeconds
+        .toDouble()
+        .clamp(1, 600);
+    final center = (clip.startSeconds + clip.endSeconds) / 2;
+    const zoomPadding = 25.0;
+    final halfWidth = (clip.trimmedDuration / 2)
+        .clamp(zoomPadding, 60.0);
+    setState(() {
+      _zoomedClipIndex = index;
+      _zoomMin = (center - halfWidth)
+          .clamp(0.0, fullMax - 10)
+          .toDouble();
+      _zoomMax = (center + halfWidth)
+          .clamp(10.0, fullMax)
+          .toDouble();
+      if (_zoomMax - _zoomMin < 10) {
+        _zoomMin = (_zoomMax - 10)
+            .clamp(0.0, fullMax)
+            .toDouble();
+      }
+    });
+  }
+
+  void _exitZoom() {
+    setState(() {
+      _zoomedClipIndex = -1;
+    });
   }
 
   @override
@@ -369,6 +402,47 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
                               ),
                               if (isSelected) ...[
                                 const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    if (_zoomedClipIndex != index)
+                                      TextButton.icon(
+                                        onPressed: () => _enterZoomForClip(index),
+                                        icon: const Icon(
+                                          Icons.zoom_in_rounded,
+                                          size: 18,
+                                          color: Colors.blueAccent,
+                                        ),
+                                        label: Text(
+                                          'Zoom in',
+                                          style: GoogleFonts.outfit(
+                                            color: Colors.blueAccent,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    if (_zoomedClipIndex == index)
+                                      FilledButton.icon(
+                                        onPressed: _exitZoom,
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: Colors.blueAccent,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                        ),
+                                        icon: const Icon(Icons.check_rounded, size: 16),
+                                        label: Text(
+                                          'Finish',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
                                 SliderTheme(
                                   data: SliderTheme.of(context).copyWith(
                                     trackHeight: 8,
@@ -410,36 +484,6 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
                                             clip.endSeconds = values.end;
                                           });
                                         },
-                                        onChangeStart: (values) {
-                                          final fullMax = clip.originalDurationSeconds
-                                              .toDouble()
-                                              .clamp(1, 600);
-                                          final center = (clip.startSeconds +
-                                                  clip.endSeconds) /
-                                              2;
-                                          const zoomPadding = 25.0;
-                                          final halfWidth = (clip.trimmedDuration / 2)
-                                              .clamp(zoomPadding, 60.0);
-                                          setState(() {
-                                            _zoomedClipIndex = index;
-                                            _zoomMin = (center - halfWidth)
-                                                .clamp(0.0, fullMax - 10)
-                                                .toDouble();
-                                            _zoomMax = (center + halfWidth)
-                                                .clamp(10.0, fullMax)
-                                                .toDouble();
-                                            if (_zoomMax - _zoomMin < 10) {
-                                              _zoomMin = (_zoomMax - 10)
-                                                  .clamp(0.0, fullMax)
-                                                  .toDouble();
-                                            }
-                                          });
-                                        },
-                                        onChangeEnd: (values) {
-                                          setState(() {
-                                            _zoomedClipIndex = -1;
-                                          });
-                                        },
                                       );
                                     },
                                   ),
@@ -448,7 +492,7 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
                                     child: Text(
-                                      'Zoomed · Release to see full song',
+                                      'Zoomed in · Press Finish to see full song',
                                       style: GoogleFonts.outfit(
                                         color: Colors.blueAccent,
                                         fontSize: 10,
