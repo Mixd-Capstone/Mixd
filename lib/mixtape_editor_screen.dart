@@ -37,6 +37,7 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
   double _mixPositionSeconds = 0;
   int _currentIndexPlaying = 0;
   int? _singleSongIndex;
+  bool _isSavingMixtape = false;
 
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<int?>? _indexSub;
@@ -263,6 +264,204 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
     });
   }
 
+  String _defaultMixtapeTitle() {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    return 'Mix $month/$day';
+  }
+
+  Map<String, dynamic> _buildTracksPayload() {
+    final tracks = <Map<String, dynamic>>[];
+    for (int i = 0; i < _clips.length; i++) {
+      final clip = _clips[i];
+      tracks.add({
+        'position': i,
+        'song_id': clip.id,
+        'title': clip.title,
+        'artist': clip.artist,
+        'album_art_url': clip.albumArtUrl,
+        'file_key': clip.fileKey,
+        'start_seconds': clip.startSeconds,
+        'end_seconds': clip.endSeconds,
+        'original_duration_seconds': clip.originalDurationSeconds,
+        'trimmed_duration_seconds': clip.trimmedDuration,
+      });
+    }
+    return {'tracks': tracks};
+  }
+
+  Future<void> _saveMixtape({
+    required String title,
+    required String description,
+    required bool isPublic,
+  }) async {
+    if (_clips.isEmpty || _isSavingMixtape) return;
+
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please sign in again to save this mixtape.',
+            style: GoogleFonts.outfit(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSavingMixtape = true;
+    });
+
+    try {
+      final trimmedTitle = title.trim();
+      final trimmedDescription = description.trim();
+      await _supabase.from('mixtapes').insert({
+        'creator_id': user.id,
+        'title': trimmedTitle.isEmpty ? _defaultMixtapeTitle() : trimmedTitle,
+        'description': trimmedDescription.isEmpty ? null : trimmedDescription,
+        'cover_art_url': _clips.first.albumArtUrl,
+        'tracks': _buildTracksPayload(),
+        'is_public': isPublic,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Mixtape saved.',
+            style: GoogleFonts.outfit(),
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not save mixtape. Please try again.',
+            style: GoogleFonts.outfit(),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingMixtape = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _promptAndSaveMixtape() async {
+    if (_clips.isEmpty || _isSavingMixtape) return;
+
+    final titleController = TextEditingController(text: _defaultMixtapeTitle());
+    final descriptionController = TextEditingController();
+    bool isPublic = false;
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF16213E),
+              title: Text(
+                'Save Mixtape',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    style: GoogleFonts.outfit(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      labelStyle: GoogleFonts.outfit(color: Colors.white70),
+                      enabledBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 2,
+                    style: GoogleFonts.outfit(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Description (optional)',
+                      labelStyle: GoogleFonts.outfit(color: Colors.white70),
+                      enabledBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Switch(
+                        value: isPublic,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            isPublic = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Make mix public',
+                          style: GoogleFonts.outfit(color: Colors.white70),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.outfit(color: Colors.white70),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(
+                    'Save',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave == true) {
+      await _saveMixtape(
+        title: titleController.text,
+        description: descriptionController.text,
+        isPublic: isPublic,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -275,6 +474,25 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
           style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
         ),
         backgroundColor: const Color(0xFF16213E),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              onPressed: _isSavingMixtape ? null : _promptAndSaveMixtape,
+              icon: _isSavingMixtape
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.save_alt_rounded),
+              tooltip: 'Save mixtape',
+            ),
+          ),
+        ],
       ),
       backgroundColor: const Color(0xFF1A1A2E),
       body: Column(
