@@ -8,7 +8,12 @@ import 'mixtape_editor_screen.dart';
 
 // 3. Plus/Create Page
 class CreateScreen extends StatefulWidget {
-  const CreateScreen({super.key});
+  const CreateScreen({
+    super.key,
+    this.onMixtapeSaved,
+  });
+
+  final VoidCallback? onMixtapeSaved;
 
   @override
   State<CreateScreen> createState() => _CreateScreenState();
@@ -384,10 +389,11 @@ class _CreateScreenState extends State<CreateScreen> {
 
                             if (!context.mounted) return;
 
-                            Navigator.of(context).push(
+                            await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => MixtapeEditorScreen(
                                   songs: selectedSongs,
+                                  onSaved: widget.onMixtapeSaved,
                                 ),
                               ),
                             );

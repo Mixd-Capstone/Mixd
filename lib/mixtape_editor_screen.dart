@@ -9,11 +9,13 @@ class MixtapeEditorScreen extends StatefulWidget {
   const MixtapeEditorScreen({
     super.key,
     required this.songs,
+    this.onSaved,
   });
 
   /// Payload passed from Create screen.
   /// Each map should contain: id, title, artist, albumArtUrl, fileKey, durationSeconds.
   final List<Map<String, dynamic>> songs;
+  final VoidCallback? onSaved;
 
   @override
   State<MixtapeEditorScreen> createState() => _MixtapeEditorScreenState();
@@ -338,6 +340,8 @@ class _MixtapeEditorScreenState extends State<MixtapeEditorScreen> {
           ),
         ),
       );
+      widget.onSaved?.call();
+      Navigator.of(context).pop(true);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
