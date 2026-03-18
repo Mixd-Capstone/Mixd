@@ -12,12 +12,20 @@ A social music platform for creating and sharing custom mixtapes. Built with Flu
 
 ## Features
 
-- **Feed** — TikTok-style vertical scroll of community mixes with like, comment, and share
-- **Explore** — Search and browse by genre (Lo-Fi, Nightcore, Techno, Indie, Alternative, Hip Hop)
-- **Create** — Upload tracks and build mixtapes (in progress)
-- **Friends** — View friends list and shared mixes
+- **Feed** — TikTok-style vertical scroll of community mixes with cassette-style cards
+- **Explore Entry in Feed** — Fixed search bar at the top of Feed that opens the Explore screen
+- **Create + Mixtape Editor** — Select songs, reorder tracks, trim/snip each clip, and preview full mix timeline
+- **Mixes Tab** — Dedicated mixes hub with:
+  - `My mixes` (saved mixes owned by the user)
+  - `Shared with you` (mixes shared to the current user)
+- **Save to Supabase** — Save mixtapes to `public.mixtapes` with title, description, visibility, and track clip metadata
+- **Delete Mixtapes** — Delete owned mixes from `My mixes` with confirmation
+- **Walkman Player** — Portrait cassette-style player with:
+  - Full mix timeline across all snippets
+  - Seek across track boundaries
+  - Tracklist bottom sheet with cover art and per-track previews
+- **Friends** — Friends list view
 - **Profile** — Google account info, stats (mixes, followers, following), sign out
-- **Walkman Player** — Retro cassette tape audio player with animated reels and landscape mode
 
 ## Project Structure
 
@@ -27,7 +35,14 @@ A social music platform for creating and sharing custom mixtapes. Built with Flu
 │   ├── auth_service.dart          # Google OAuth sign-in/sign-out
 │   ├── login_screen.dart          # Login UI
 │   ├── home_screen.dart           # Bottom nav with 5 tabs
-│   └── walkman_player_screen.dart # Retro audio player
+│   ├── feed_screen.dart           # Vertical feed + Explore entry bar
+│   ├── explore_screen.dart        # Explore/search page
+│   ├── create_screen.dart         # Song selection before editing
+│   ├── mixtape_editor_screen.dart # Reorder/snip/save mixtapes
+│   ├── mixes_screen.dart          # My mixes + Shared with you
+│   ├── friends_screen.dart        # Friends page
+│   ├── profile_screen.dart        # User profile page
+│   └── walkman_player_screen.dart # Cassette-style audio player
 ├── assets/
 │   └── audio/
 │       └── sample.mp3             # Placeholder audio (will be replaced with DB audio)
