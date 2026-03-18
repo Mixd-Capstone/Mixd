@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'feed_screen.dart';
-import 'explore_screen.dart';
+import 'mixes_screen.dart';
 import 'create_screen.dart';
 import 'friends_screen.dart';
 import 'profile_screen.dart';
@@ -17,15 +17,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  // List of screens for the 5 tabs
-  final List<Widget> _screens = [
-    const FeedScreen(),
-    const ExploreScreen(),
-    const CreateScreen(),
-    const FriendsScreen(),
-    const ProfileScreen(),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -34,9 +25,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screens = <Widget>[
+      const FeedScreen(),
+      const MixesScreen(),
+      CreateScreen(
+        onMixtapeSaved: () {
+          _onItemTapped(1);
+        },
+      ),
+      const FriendsScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E),
-      body: _screens[_selectedIndex],
+      body: screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF16213E),
@@ -64,8 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Feed',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.search_rounded),
-              label: 'Explore',
+              icon: Icon(Icons.library_music_rounded),
+              label: 'Mixes',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.add_circle_outline_rounded, size: 40, color: Colors.blueAccent),
