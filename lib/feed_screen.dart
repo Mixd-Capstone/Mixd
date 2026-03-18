@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'explore_screen.dart';
 import 'walkman_player_screen.dart';
 
 // 1. Reel style scrollable page
@@ -20,87 +21,133 @@ class FeedScreen extends StatelessWidget {
       ),
     );
 
-    return PageView.builder(
-      scrollDirection: Axis.vertical,
-      itemCount: demoItems.length,
-      itemBuilder: (context, index) {
-        final item = demoItems[index];
+    return Stack(
+      children: [
+        PageView.builder(
+          scrollDirection: Axis.vertical,
+          itemCount: demoItems.length,
+          itemBuilder: (context, index) {
+            final item = demoItems[index];
 
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            // Background gradient to keep the TikTok-style feel.
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF000000),
-                    Color(0xFF0A0A1A),
-                    Color(0xFF1A1A2E),
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                // Background gradient to keep the TikTok-style feel.
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF000000),
+                        Color(0xFF0A0A1A),
+                        Color(0xFF1A1A2E),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Centered cassette-style card similar to the Walkman screen.
+                Center(
+                  child: _FeedCassetteCard(
+                    title: item.title,
+                    artist: item.artist,
+                    onTapPlay: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => WalkmanPlayerScreen(
+                            filePath: item.source,
+                            title: item.title,
+                            artist: item.artist,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Right Sidebar actions
+                Positioned(
+                  right: 20,
+                  bottom: 100,
+                  child: Column(
+                    children: [
+                      _actionButton(Icons.favorite_rounded, '12k'),
+                      _actionButton(Icons.comment_rounded, '456'),
+                      _actionButton(Icons.share_rounded, 'Share'),
+                    ],
+                  ),
+                ),
+
+                // Bottom Info
+                Positioned(
+                  left: 20,
+                  bottom: 40,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '@creator_name',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Check out this custom mix... #music #mixd',
+                        style: GoogleFonts.outfit(color: Colors.white70),
+                      ),
+                  ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+
+        // Explore search bar entry point (fixed across feed scroll).
+        Positioned(
+          top: 12,
+          left: 16,
+          right: 16,
+          child: SafeArea(
+            bottom: false,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ExploreScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                height: 46,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16213E).withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search_rounded, color: Colors.white54),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Explore',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-
-            // Centered cassette-style card similar to the Walkman screen.
-            Center(
-              child: _FeedCassetteCard(
-                title: item.title,
-                artist: item.artist,
-                onTapPlay: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => WalkmanPlayerScreen(
-                        filePath: item.source,
-                        title: item.title,
-                        artist: item.artist,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // Right Sidebar actions
-            Positioned(
-              right: 20,
-              bottom: 100,
-              child: Column(
-                children: [
-                  _actionButton(Icons.favorite_rounded, '12k'),
-                  _actionButton(Icons.comment_rounded, '456'),
-                  _actionButton(Icons.share_rounded, 'Share'),
-                ],
-              ),
-            ),
-
-            // Bottom Info
-            Positioned(
-              left: 20,
-              bottom: 40,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '@creator_name',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Check out this custom mix... #music #mixd',
-                    style: GoogleFonts.outfit(color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 

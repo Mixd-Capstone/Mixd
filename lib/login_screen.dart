@@ -18,145 +18,175 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
+          const DecoratedBox(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF1A1A2E), // Dark Navy
-                  Color(0xFF16213E), // Deep Blue
-                  Color(0xFF0F3460), // Royal Blue
+                  Color(0xFF1A1A2E),
+                  Color(0xFF16213E),
+                  Color(0xFF1A1A2E),
                 ],
               ),
             ),
           ),
-          
-          // Content
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo or Icon
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withAlpha(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blueAccent.withAlpha(51),
-                          blurRadius: 20,
-                          spreadRadius: 5,
+          Positioned(
+            top: 70,
+            left: -90,
+            child: Container(
+              width: 230,
+              height: 230,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blueAccent.withValues(alpha: 0.08),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blueAccent.withValues(alpha: 0.18),
+                    blurRadius: 90,
+                    spreadRadius: 8,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 90,
+            right: -80,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.lightBlueAccent.withValues(alpha: 0.06),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.lightBlueAccent.withValues(alpha: 0.14),
+                    blurRadius: 90,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 122,
+                      height: 122,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.08),
+                        border: Border.all(color: Colors.white24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blueAccent.withValues(alpha: 0.25),
+                            blurRadius: 30,
+                            spreadRadius: 3,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.blur_on_rounded,
+                        size: 70,
+                        color: Color(0xFF5E9EFF),
+                      ),
+                    ),
+                    const SizedBox(height: 34),
+                    Text(
+                      'MIXD',
+                      style: GoogleFonts.outfit(
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Experience the Future of Mixtapes',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                    const SizedBox(height: 74),
+                    if (_isLoading)
+                      const CircularProgressIndicator(color: Colors.blueAccent)
+                    else
+                      Container(
+                        width: double.infinity,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.32),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.blur_on_rounded,
-                      size: 80,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  // App Name
-                  Text(
-                    'MIXD',
-                    style: GoogleFonts.outfit(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 8,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  
-                  // Subtitle
-                  Text(
-                    'Experience the Future of Mixtapes',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                  const SizedBox(height: 80),
-                  
-                  // Google Sign In Button
-                  _isLoading
-                      ? const CircularProgressIndicator(color: Colors.blueAccent)
-                      : Container(
-                          width: double.infinity,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withAlpha(51),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            setState(() => _isLoading = true);
+                            final success = await _authService.signInWithGoogle();
+                            if (!context.mounted) return;
+                            if (!success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Sign in failed. Please try again.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                            setState(() => _isLoading = false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black87,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.network(
+                                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
+                                height: 23,
+                              ),
+                              const SizedBox(width: 14),
+                              Text(
+                                'Continue with Google',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              setState(() => _isLoading = true);
-                              final success = await _authService.signInWithGoogle();
-                              if (!context.mounted) return;
-                              if (!success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Sign in failed. Please try again.'),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                );
-                              }
-                              setState(() => _isLoading = false);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black87,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.network(
-                                  'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
-                                  height: 24,
-                                ),
-                                const SizedBox(width: 15),
-                                Text(
-                                  'Continue with Google',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Terms
-                  Text(
-                    'By continuing, you agree to our Terms and Conditions',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      color: Colors.white38,
+                      ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'By continuing, you agree to our Terms and Conditions',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: Colors.white38,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
