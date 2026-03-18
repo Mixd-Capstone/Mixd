@@ -146,13 +146,21 @@ class _FeedCassetteCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFEEE8D5),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF1E2B4A),
+              Color(0xFF18223D),
+              Color(0xFF121A31),
+            ],
+          ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF4A4A4A), width: 3),
-          boxShadow: const [
+          border: Border.all(color: Colors.white12, width: 1.4),
+          boxShadow: [
             BoxShadow(
-              color: Colors.black38,
-              blurRadius: 20,
+              color: Colors.black.withValues(alpha: 0.45),
+              blurRadius: 22,
               offset: Offset(0, 8),
             ),
           ],
@@ -165,10 +173,13 @@ class _FeedCassetteCard extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.18),
                   border: Border(
-                    bottom: BorderSide(color: Colors.black12, width: 1),
+                    bottom: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      width: 1,
+                    ),
                   ),
                 ),
                 child: Column(
@@ -181,7 +192,7 @@ class _FeedCassetteCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontSize: 18,
-                        color: Colors.black87,
+                      color: Colors.white,
                         fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.w600,
                       ),
@@ -194,7 +205,7 @@ class _FeedCassetteCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelMedium?.copyWith(
                         fontSize: 13,
-                        color: Colors.black54,
+                      color: Colors.white70,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -202,29 +213,47 @@ class _FeedCassetteCard extends StatelessWidget {
                 ),
               ),
 
-              // Color stripe
+              // Accent stripe
               SizedBox(
                 height: 16,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: const [
-                    Expanded(
-                      child: ColoredBox(color: Color(0xFFE57373)),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.blueAccent.withValues(alpha: 0.35),
+                        Colors.blueAccent.withValues(alpha: 0.12),
+                        Colors.blueAccent.withValues(alpha: 0.35),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    Expanded(
-                      child: ColoredBox(color: Color(0xFFFFB74D)),
-                    ),
-                    Expanded(
-                      child: ColoredBox(color: Color(0xFF64B5F6)),
-                    ),
-                  ],
+                  ),
+                  child: Row(
+                    children: const [
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Divider(color: Colors.white24, thickness: 0.8),
+                      ),
+                      SizedBox(width: 10),
+                      Icon(
+                        Icons.graphic_eq_rounded,
+                        size: 14,
+                        color: Colors.white70,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Divider(color: Colors.white24, thickness: 0.8),
+                      ),
+                      SizedBox(width: 14),
+                    ],
+                  ),
                 ),
               ),
 
               // Middle area with reels + play button (static reels)
               Expanded(
                 child: Container(
-                  color: const Color(0xFFD5D0BC),
+                  color: Colors.transparent,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 16,
@@ -240,12 +269,12 @@ class _FeedCassetteCard extends StatelessWidget {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFF263238),
+                            color: const Color(0xFF3A7BFF),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withAlpha(77),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                                color: const Color(0xFF3A7BFF).withValues(alpha: 0.35),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
@@ -281,8 +310,15 @@ class _StaticReel extends StatelessWidget {
       height: 52,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF263238),
-        border: Border.all(color: Colors.white70, width: 2),
+        color: const Color(0xFF0F172A),
+        border: Border.all(color: Colors.white54, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -293,7 +329,7 @@ class _StaticReel extends StatelessWidget {
               child: Container(
                 width: 32,
                 height: 3,
-                color: Colors.white38,
+                color: Colors.white30,
               ),
             ),
           Container(

@@ -120,7 +120,88 @@ class _MixesScreenState extends State<MixesScreen> {
     return playableTracks;
   }
 
-  Widget _buildMixCard(Map<String, dynamic> mix) {
+  Future<void> _confirmAndDeleteMix(Map<String, dynamic> mix) async {
+    final mixId = mix['id']?.toString();
+    if (mixId == null || mixId.isEmpty) return;
+
+    final title = (mix['title'] as String?)?.trim();
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF16213E),
+          title: Text(
+            'Delete mixtape?',
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'This will permanently delete "${title == null || title.isEmpty ? 'Untitled Mix' : title}".',
+            style: GoogleFonts.outfit(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.outfit(color: Colors.white70),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                'Delete',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) return;
+
+    try {
+      await _supabase.from('mixtapes').delete().eq('id', mixId);
+      if (!mounted) return;
+
+      setState(() {
+        _myMixes = _myMixes.where((m) => '${m['id']}' != mixId).toList();
+        _sharedMixes =
+            _sharedMixes.where((m) => '${m['id']}' != mixId).toList();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Mixtape deleted.',
+            style: GoogleFonts.outfit(),
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not delete mixtape.',
+            style: GoogleFonts.outfit(),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildMixCard(
+    Map<String, dynamic> mix, {
+    bool canDelete = false,
+  }) {
     final title = (mix['title'] as String?)?.trim();
     final description = (mix['description'] as String?)?.trim();
     final isPublic = mix['is_public'] == true;
@@ -193,7 +274,13 @@ class _MixesScreenState extends State<MixesScreen> {
             ),
           ],
         ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+        trailing: canDelete
+            ? IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                tooltip: 'Delete mixtape',
+                onPressed: () => _confirmAndDeleteMix(mix),
+              )
+            : const Icon(Icons.chevron_right_rounded, color: Colors.white54),
         onTap: () {
           final playableTracks = _extractPlayableTracks(mix);
           if (playableTracks.isEmpty) {
@@ -228,6 +315,7 @@ class _MixesScreenState extends State<MixesScreen> {
     required String title,
     required List<Map<String, dynamic>> mixes,
     required String emptyMessage,
+    bool canDelete = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,7 +347,7 @@ class _MixesScreenState extends State<MixesScreen> {
             ),
           )
         else
-          ...mixes.map(_buildMixCard),
+          ...mixes.map((mix) => _buildMixCard(mix, canDelete: canDelete)),
       ],
     );
   }
@@ -314,6 +402,7 @@ class _MixesScreenState extends State<MixesScreen> {
               title: 'My mixes',
               mixes: _myMixes,
               emptyMessage: 'No mixes yet. Create and save your first mix.',
+              canDelete: true,
             ),
             const SizedBox(height: 22),
             _buildSection(
