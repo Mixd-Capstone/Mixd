@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 640" fill="none">
+  <rect width="360" height="640" fill="#1a1a2e"/>
+  <rect x="0" y="0" width="360" height="56" fill="#16213e"/>
+  <text x="48" y="36" font-family="system-ui, sans-serif" font-size="14" fill="#fff">&lt; Mixtape editor</text>
+  <text x="300" y="36" text-anchor="end" font-family="system-ui, sans-serif" font-size="13" fill="#3b82f6" font-weight="600">Save</text>
+  <text x="20" y="88" font-family="system-ui, sans-serif" font-size="11" fill="#8a9bb8">Total 7:32 / max 10:00</text>
+  <rect x="16" y="100" width="328" height="64" rx="6" fill="#16213e" stroke="#3b82f6" stroke-width="1"/>
+  <rect x="28" y="116" width="72" height="32" rx="4" fill="#2d4a7c"/>
+  <rect x="108" y="116" width="96" height="32" rx="4" fill="#2d4a7c"/>
+  <rect x="212" y="116" width="120" height="32" rx="4" fill="#2d4a7c"/>
+  <rect x="28" y="116" width="4" height="32" fill="#3b82f6"/>
+  <rect x="96" y="116" width="4" height="32" fill="#3b82f6"/>
+  <text x="180" y="200" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6b7280">Timeline (trim handles on clip edges)</text>
+  <circle cx="180" cy="260" r="36" stroke="#fff" stroke-width="2" fill="#16213e"/>
+  <polygon points="172,245 172,275 198,260" fill="#fff"/>
+  <rect x="16" y="320" width="328" height="200" rx="8" fill="#16213e" stroke="#2a3f5f"/>
+  <text x="28" y="348" font-family="system-ui, sans-serif" font-size="12" fill="#fff" font-weight="600">Clips</text>
+  <rect x="24" y="360" width="312" height="44" rx="4" fill="#1e2d4a"/>
+  <rect x="24" y="412" width="312" height="44" rx="4" fill="#1e2d4a"/>
+  <rect x="24" y="464" width="312" height="44" rx="4" fill="#1e2d4a"/>
+  <text x="40" y="388" font-family="system-ui, sans-serif" font-size="11" fill="#cbd5e1">1. Artist - Title ...</text>
+  <text x="40" y="440" font-family="system-ui, sans-serif" font-size="11" fill="#cbd5e1">2. Artist - Title ...</text>
+  <text x="40" y="492" font-family="system-ui, sans-serif" font-size="11" fill="#cbd5e1">3. Artist - Title ...</text>
+</svg>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 640" fill="none">
+  <rect width="360" height="640" fill="#1a1a2e"/>
+  <rect x="0" y="0" width="360" height="56" fill="#16213e"/>
+  <text x="48" y="36" font-family="system-ui, sans-serif" font-size="14" fill="#fff">&lt; Now playing</text>
+  <rect x="60" y="100" width="240" height="240" rx="12" fill="#16213e" stroke="#3b82f6" stroke-width="2"/>
+  <text x="180" y="230" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#8a9bb8">Cover / cassette art</text>
+  <text x="180" y="360" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#fff" font-weight="600">Mix title</text>
+  <text x="180" y="386" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#8a9bb8">@curator</text>
+  <rect x="40" y="408" width="280" height="4" rx="2" fill="#2a3f5f"/>
+  <rect x="40" y="408" width="120" height="4" rx="2" fill="#3b82f6"/>
+  <text x="40" y="432" font-family="system-ui, sans-serif" font-size="10" fill="#8a9bb8">2:14</text>
+  <text x="320" y="432" text-anchor="end" font-family="system-ui, sans-serif" font-size="10" fill="#8a9bb8">7:32</text>
+  <circle cx="140" cy="500" r="28" stroke="#fff" stroke-width="2" fill="none"/>
+  <polygon points="134,488 134,512 150,500" fill="#fff"/>
+  <circle cx="220" cy="500" r="36" fill="#3b82f6"/>
+  <polygon points="208,488 208,512 232,500" fill="#fff"/>
+  <circle cx="300" cy="500" r="28" stroke="#fff" stroke-width="2" fill="none"/>
+  <text x="180" y="580" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#3b82f6">Tracklist v</text>
+</svg>
