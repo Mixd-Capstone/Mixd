@@ -26,6 +26,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Map<String, dynamic>> _results = const [];
   Map<String, List<String>> _genresBySongId = const {};
   Map<String, List<String>> _genresByMixtapeId = const {};
+  Map<String, String> _creatorNameById = const {};
 
   @override
   void initState() {
@@ -72,6 +73,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
         }
       }
 
+      final creatorIds = <String>{};
+      for (final m in mixes) {
+        final cid = (m['creator_id'] ?? '').toString();
+        if (cid.isNotEmpty) creatorIds.add(cid);
+      }
+      Map<String, String> creatorNameById = const {};
+      if (creatorIds.isNotEmpty) {
+        try {
+          final rows = await _supabase
+              .from('profiles')
+              .select('id, username, full_name')
+              .inFilter('id', creatorIds.toList());
+          final map = <String, String>{};
+          for (final r in (rows as List).cast<Map<String, dynamic>>()) {
+            final id = (r['id'] ?? '').toString();
+            if (id.isEmpty) continue;
+            final name =
+                (r['username'] ?? r['full_name'] ?? '').toString().trim();
+            if (name.isNotEmpty) map[id] = name;
+          }
+          creatorNameById = map;
+        } catch (_) {
+          creatorNameById = const {};
+        }
+      }
+
       if (!mounted) return;
       setState(() {
         _allMixtapes = mixes;
@@ -80,6 +107,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           mixes: mixes,
           genresBySongId: genresBySongId,
         );
+        _creatorNameById = creatorNameById;
         _loading = false;
       });
 
@@ -125,6 +153,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() {
       _results = hits;
     });
+  }
+
+  String _creatorLabel(String creatorId) {
+    final name = _creatorNameById[creatorId];
+    if (name != null && name.trim().isNotEmpty) return name.trim();
+    if (creatorId.isEmpty) return 'creator';
+    if (creatorId.length <= 8) return creatorId;
+    return '${creatorId.substring(0, 4)}…${creatorId.substring(creatorId.length - 4)}';
   }
 
   Map<String, List<String>> _buildGenresByMixtapeId({
@@ -220,7 +256,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Future<void> _openMix(Map<String, dynamic> mix) async {
     final title = (mix['title'] as String?)?.trim();
-    final id = (mix['id'] ?? '').toString();
+    final creatorId = (mix['creator_id'] ?? '').toString();
+    final creator = _creatorLabel(creatorId);
     final tracks = _extractPlayableTracks(mix);
     if (tracks.isEmpty) {
       if (!mounted) return;
@@ -239,7 +276,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       MaterialPageRoute(
         builder: (_) => WalkmanPlayerScreen(
           title: (title == null || title.isEmpty) ? 'Mixtape' : title,
-          artist: id.isEmpty ? 'Unknown' : id,
+          artist: creator,
           mixTracks: tracks,
         ),
       ),
@@ -343,6 +380,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       .toString()
                                       .trim();
                                   final id = (mix['id'] ?? '').toString();
+                                  final creatorId =
+                                      (mix['creator_id'] ?? '').toString();
+                                  final creator = _creatorLabel(creatorId);
                                   final trackCount = _trackCountForMix(mix);
                                   final genres = _genresForMixtape(mix);
 
@@ -425,6 +465,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                                       color: Colors.white70,
                                                       fontSize: 12,
                                                       height: 1.25,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    '@$creator',
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.outfit(
+                                                      color: Colors.white54,
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w600,
                                                     ),
                                                   ),
                                                   if (genres.isNotEmpty) ...[
