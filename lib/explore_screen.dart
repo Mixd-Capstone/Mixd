@@ -1,9 +1,250 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'walkman_player_screen.dart';
 
 // 2. Explore Page
-class ExploreScreen extends StatelessWidget {
+class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
+
+  @override
+  State<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends State<ExploreScreen> {
+  final SupabaseClient _supabase = Supabase.instance.client;
+  final TextEditingController _controller = TextEditingController();
+
+  Timer? _debounce;
+  bool _loading = true;
+  String? _error;
+
+  List<Map<String, dynamic>> _allMixtapes = const [];
+  List<Map<String, dynamic>> _results = const [];
+  Map<String, List<String>> _genresBySongId = const {};
+  Map<String, List<String>> _genresByMixtapeId = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMixtapes();
+    _controller.addListener(_onQueryChanged);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.removeListener(_onQueryChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMixtapes() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        _supabase
+            .from('mixtapes')
+            .select()
+            .order('created_at', ascending: false)
+            .limit(200),
+        _supabase.from('songs').select('id, genres'),
+      ]);
+
+      final mixes = (results[0] as List).cast<Map<String, dynamic>>();
+      final songs = (results[1] as List).cast<Map<String, dynamic>>();
+      final genresBySongId = <String, List<String>>{};
+      for (final s in songs) {
+        final id = (s['id'] ?? '').toString();
+        if (id.isEmpty) continue;
+        final raw = s['genres'];
+        if (raw is List) {
+          genresBySongId[id] = raw.map((g) => g.toString()).toList();
+        } else {
+          genresBySongId[id] = const [];
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _allMixtapes = mixes;
+        _genresBySongId = genresBySongId;
+        _genresByMixtapeId = _buildGenresByMixtapeId(
+          mixes: mixes,
+          genresBySongId: genresBySongId,
+        );
+        _loading = false;
+      });
+
+      _applySearch(_controller.text);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not load mixtapes.\n$e';
+        _loading = false;
+      });
+    }
+  }
+
+  void _onQueryChanged() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      _applySearch(_controller.text);
+    });
+  }
+
+  void _applySearch(String raw) {
+    final query = raw.trim().toLowerCase();
+    if (query.isEmpty) {
+      setState(() {
+        _results = _allMixtapes;
+      });
+      return;
+    }
+
+    final hits = _allMixtapes.where((m) {
+      final title = (m['title'] ?? '').toString().toLowerCase();
+      final description = (m['description'] ?? '').toString().toLowerCase();
+      final id = (m['id'] ?? '').toString().toLowerCase();
+      final mixGenres = _genresForMixtape(m)
+          .map((g) => g.toLowerCase())
+          .join(' ');
+      return title.contains(query) ||
+          description.contains(query) ||
+          id.contains(query) ||
+          mixGenres.contains(query);
+    }).toList();
+
+    setState(() {
+      _results = hits;
+    });
+  }
+
+  Map<String, List<String>> _buildGenresByMixtapeId({
+    required List<Map<String, dynamic>> mixes,
+    required Map<String, List<String>> genresBySongId,
+  }) {
+    final out = <String, List<String>>{};
+    for (final mix in mixes) {
+      final mixId = (mix['id'] ?? '').toString();
+      if (mixId.isEmpty) continue;
+      out[mixId] = _extractGenresFromMix(
+        mix: mix,
+        genresBySongId: genresBySongId,
+      );
+    }
+    return out;
+  }
+
+  List<String> _extractGenresFromMix({
+    required Map<String, dynamic> mix,
+    required Map<String, List<String>> genresBySongId,
+  }) {
+    final payload = mix['tracks'];
+    if (payload is! Map<String, dynamic>) return const [];
+    final rawTracks = payload['tracks'];
+    if (rawTracks is! List) return const [];
+
+    final set = <String>{};
+    for (final raw in rawTracks) {
+      if (raw is! Map<String, dynamic>) continue;
+      final songId = (raw['song_id'] ?? raw['songId'] ?? '').toString();
+      if (songId.isEmpty) continue;
+      for (final g in (genresBySongId[songId] ?? const <String>[])) {
+        final trimmed = g.trim();
+        if (trimmed.isNotEmpty) set.add(trimmed);
+      }
+    }
+    final list = set.toList();
+    list.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return list;
+  }
+
+  List<String> _genresForMixtape(Map<String, dynamic> mix) {
+    final id = (mix['id'] ?? '').toString();
+    if (id.isEmpty) return const [];
+    final cached = _genresByMixtapeId[id];
+    if (cached != null) return cached;
+    // Fallback if cache wasn't built yet.
+    return _extractGenresFromMix(mix: mix, genresBySongId: _genresBySongId);
+  }
+
+  double _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0.0;
+  }
+
+  List<WalkmanMixTrack> _extractPlayableTracks(Map<String, dynamic> mix) {
+    final payload = mix['tracks'];
+    if (payload is! Map<String, dynamic>) return const [];
+    final rawTracks = payload['tracks'];
+    if (rawTracks is! List) return const [];
+
+    final out = <WalkmanMixTrack>[];
+    for (final raw in rawTracks) {
+      if (raw is! Map<String, dynamic>) continue;
+      final fileKey = (raw['file_key'] ?? raw['fileKey'])?.toString() ?? '';
+      if (fileKey.isEmpty) continue;
+      final start = _asDouble(raw['start_seconds']);
+      final end = _asDouble(raw['end_seconds']);
+      if (end <= start) continue;
+      out.add(
+        WalkmanMixTrack(
+          fileKey: fileKey,
+          startSeconds: start,
+          endSeconds: end,
+          title: (raw['title'] ?? '').toString(),
+          artist: (raw['artist'] ?? '').toString(),
+          coverArtUrl: (raw['album_art_url'] ?? raw['albumArtUrl'])?.toString(),
+        ),
+      );
+    }
+    return out;
+  }
+
+  int _trackCountForMix(Map<String, dynamic> mix) {
+    final payload = mix['tracks'];
+    if (payload is Map<String, dynamic>) {
+      final tracks = payload['tracks'];
+      if (tracks is List) return tracks.length;
+    }
+    return 0;
+  }
+
+  Future<void> _openMix(Map<String, dynamic> mix) async {
+    final title = (mix['title'] as String?)?.trim();
+    final id = (mix['id'] ?? '').toString();
+    final tracks = _extractPlayableTracks(mix);
+    if (tracks.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No playable tracks found for this mix.',
+            style: GoogleFonts.outfit(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WalkmanPlayerScreen(
+          title: (title == null || title.isEmpty) ? 'Mixtape' : title,
+          artist: id.isEmpty ? 'Unknown' : id,
+          mixTracks: tracks,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +272,20 @@ class ExploreScreen extends StatelessWidget {
           child: Column(
             children: [
               TextField(
+                controller: _controller,
                 decoration: InputDecoration(
-                  hintText: 'Search mixers, artists, tracks...',
+                  hintText: 'Search title, description, or mixtape ID...',
                   hintStyle: GoogleFonts.outfit(color: Colors.white38),
                   prefixIcon: const Icon(Icons.search, color: Colors.white38),
+                  suffixIcon: _controller.text.trim().isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                          onPressed: () {
+                            _controller.clear();
+                            _applySearch('');
+                          },
+                        ),
                   filled: true,
                   fillColor: const Color(0xFF16213E),
                   border: OutlineInputBorder(
@@ -43,47 +294,172 @@ class ExploreScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 14),
               Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                    childAspectRatio: 1.5,
-                  ),
-                  itemCount: 6,
-                  itemBuilder: (context, index) {
-                    final categories = [
-                      'Lo-Fi',
-                      'Nightcore',
-                      'Techno',
-                      'Indie',
-                      'Alternative',
-                      'Hip Hop',
-                    ];
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.blueAccent.withAlpha(51),
-                            Colors.blueAccent.withAlpha(102),
-                          ],
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          categories[index],
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                child: _loading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.blueAccent),
+                      )
+                    : _error != null
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.outfit(color: Colors.white70),
+                                ),
+                                const SizedBox(height: 12),
+                                FilledButton(
+                                  onPressed: _loadMixtapes,
+                                  child: Text('Retry', style: GoogleFonts.outfit()),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _results.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'No results.',
+                                  style: GoogleFonts.outfit(color: Colors.white70),
+                                ),
+                              )
+                            : GridView.builder(
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 14,
+                                  mainAxisSpacing: 14,
+                                  childAspectRatio: 0.92,
+                                ),
+                                itemCount: _results.length,
+                                itemBuilder: (context, index) {
+                                  final mix = _results[index];
+                                  final title = (mix['title'] as String?)?.trim();
+                                  final description =
+                                      (mix['description'] as String?)?.trim();
+                                  final coverArtUrl = (mix['cover_art_url'] ?? '')
+                                      .toString()
+                                      .trim();
+                                  final id = (mix['id'] ?? '').toString();
+                                  final trackCount = _trackCountForMix(mix);
+                                  final genres = _genresForMixtape(mix);
+
+                                  return InkWell(
+                                    onTap: () => _openMix(mix),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        color: const Color(0xFF16213E),
+                                        border: Border.all(color: Colors.white10),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.25),
+                                            blurRadius: 14,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          children: [
+                                            Expanded(
+                                              child: coverArtUrl.isNotEmpty
+                                                  ? Image.network(
+                                                      coverArtUrl,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder:
+                                                          (context, error, stack) {
+                                                        return Container(
+                                                          color: Colors.blueAccent
+                                                              .withValues(alpha: 0.12),
+                                                          child: const Icon(
+                                                            Icons.queue_music_rounded,
+                                                            color: Colors.white70,
+                                                            size: 34,
+                                                          ),
+                                                        );
+                                                      },
+                                                    )
+                                                  : Container(
+                                                      color: Colors.blueAccent
+                                                          .withValues(alpha: 0.12),
+                                                      child: const Icon(
+                                                        Icons.queue_music_rounded,
+                                                        color: Colors.white70,
+                                                        size: 34,
+                                                      ),
+                                                    ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.fromLTRB(
+                                                  12, 10, 12, 12),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    (title == null || title.isEmpty)
+                                                        ? 'Untitled Mix'
+                                                        : title,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.outfit(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    (description == null ||
+                                                            description.isEmpty)
+                                                        ? '$trackCount tracks'
+                                                        : description,
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.outfit(
+                                                      color: Colors.white70,
+                                                      fontSize: 12,
+                                                      height: 1.25,
+                                                    ),
+                                                  ),
+                                                  if (genres.isNotEmpty) ...[
+                                                    const SizedBox(height: 6),
+                                                    Text(
+                                                      genres.take(3).join(' · '),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.outfit(
+                                                        color: Colors.blueAccent,
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    id.isEmpty ? '' : id,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.outfit(
+                                                      color: Colors.white38,
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
               ),
             ],
           ),
