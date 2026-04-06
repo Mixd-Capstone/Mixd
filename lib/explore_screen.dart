@@ -54,6 +54,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _supabase
             .from('mixtapes')
             .select()
+            .eq('is_public', true)
             .order('created_at', ascending: false)
             .limit(200),
         _supabase.from('songs').select('id, genres'),

@@ -59,6 +59,7 @@ class _FeedScreenState extends State<FeedScreen> {
       final mixes = (await _supabase
               .from('mixtapes')
               .select()
+              .eq('is_public', true)
               .order('created_at', ascending: false)
               .limit(50))
           .cast<Map<String, dynamic>>();
