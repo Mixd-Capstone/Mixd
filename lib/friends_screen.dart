@@ -67,6 +67,35 @@ class _FriendsTabState extends State<_FriendsTab> {
     return 'No email available';
   }
 
+  String? _avatarUrl(Map<String, dynamic> row) {
+    final direct = row['avatar_url']?.toString().trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    final metadata = row['user_metadata'];
+    if (metadata is Map<String, dynamic>) {
+      final fromMeta = metadata['avatar_url']?.toString().trim();
+      if (fromMeta != null && fromMeta.isNotEmpty) return fromMeta;
+      final picture = metadata['picture']?.toString().trim();
+      if (picture != null && picture.isNotEmpty) return picture;
+    }
+    return null;
+  }
+
+  Widget _friendAvatar(Map<String, dynamic> row) {
+    final avatarUrl = _avatarUrl(row);
+    if (avatarUrl == null || avatarUrl.isEmpty) {
+      return CircleAvatar(
+        backgroundColor: Colors.blueAccent.withAlpha(128),
+        child: const Icon(Icons.person, color: Colors.white),
+      );
+    }
+    return CircleAvatar(
+      backgroundColor: Colors.blueAccent.withAlpha(90),
+      backgroundImage: NetworkImage(avatarUrl),
+      onBackgroundImageError: (_, __) {},
+      child: const SizedBox.shrink(),
+    );
+  }
+
   Future<Map<String, DateTime>> _loadLastMessageTimes(List<String> friendIds) async {
     final myId = _supabase.auth.currentUser?.id;
     if (myId == null || myId.isEmpty || friendIds.isEmpty) return const {};
@@ -189,8 +218,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                             ),
                           );
                         },
-                  leading:
-                      CircleAvatar(backgroundColor: Colors.blueAccent.withAlpha(128)),
+                  leading: _friendAvatar(row),
                   title: Text(
                     receiverName,
                     style: GoogleFonts.outfit(color: Colors.white),

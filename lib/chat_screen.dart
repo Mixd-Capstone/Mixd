@@ -111,6 +111,15 @@ class _ChatScreenState extends State<ChatScreen> {
         'receiver_id': widget.receiverId,
         'content': content,
       });
+
+      final mixtapeId = _extractMixtapeId(content);
+      if (mixtapeId != null) {
+        await _appendSharedUserToMixtape(
+          mixtapeId: mixtapeId,
+          receiverId: widget.receiverId,
+        );
+      }
+
       if (clearTextField) _messageController.clear();
       if (!mounted) return;
       setState(() {});
@@ -130,6 +139,37 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       setState(() => _sending = false);
     }
+  }
+
+  Future<void> _appendSharedUserToMixtape({
+    required String mixtapeId,
+    required String receiverId,
+  }) async {
+    final rows = await _supabase
+        .from('mixtapes')
+        .select('shared_users')
+        .eq('id', mixtapeId)
+        .limit(1);
+
+    if (rows is! List || rows.isEmpty) return;
+    final row = rows.first;
+    if (row is! Map<String, dynamic>) return;
+
+    final existingRaw = row['shared_users'];
+    final existing = <String>{};
+    if (existingRaw is List) {
+      for (final value in existingRaw) {
+        final id = value?.toString() ?? '';
+        if (id.isNotEmpty) existing.add(id);
+      }
+    }
+
+    if (existing.contains(receiverId)) return;
+    existing.add(receiverId);
+
+    await _supabase
+        .from('mixtapes')
+        .update({'shared_users': existing.toList()}).eq('id', mixtapeId);
   }
 
   Future<List<Map<String, dynamic>>> _loadMyMixtapes() async {
