@@ -102,6 +102,23 @@ class _FeedScreenState extends State<FeedScreen> {
 
     try {
       final rows = await _supabase
+          .from('profiles')
+          .select('id, username, full_name')
+          .inFilter('id', ids.toList());
+      final map = <String, String>{};
+      for (final r in (rows as List).cast<Map<String, dynamic>>()) {
+        final id = r['id']?.toString();
+        if (id == null || id.isEmpty) continue;
+        final name = (r['username'] ?? r['full_name'] ?? '').toString().trim();
+        if (name.isNotEmpty) map[id] = name;
+      }
+      if (!mounted) return;
+      setState(() => _creatorNameById.addAll(map));
+    } catch (_) {}
+
+    // Fallback: derive something readable from `users.email` if profiles is missing.
+    try {
+      final rows = await _supabase
           .from('users')
           .select('id, email')
           .inFilter('id', ids.toList());
@@ -109,31 +126,12 @@ class _FeedScreenState extends State<FeedScreen> {
       for (final r in (rows as List).cast<Map<String, dynamic>>()) {
         final id = r['id']?.toString();
         if (id == null || id.isEmpty) continue;
+        if (_creatorNameById.containsKey(id)) continue;
         final email = (r['email'] ?? '').toString().trim();
         if (email.isNotEmpty) {
           final local = email.split('@').first.trim();
           map[id] = local.isEmpty ? email : local;
         }
-      }
-      if (!mounted) return;
-      setState(() => _creatorNameById.addAll(map));
-      return;
-    } catch (_) {}
-
-    try {
-      final rows = await _supabase
-          .from('profiles')
-          .select('id, username, display_name, full_name')
-          .inFilter('id', ids.toList());
-      final map = <String, String>{};
-      for (final r in (rows as List).cast<Map<String, dynamic>>()) {
-        final id = r['id']?.toString();
-        if (id == null || id.isEmpty) continue;
-        final name =
-            (r['username'] ?? r['display_name'] ?? r['full_name'] ?? '')
-                .toString()
-                .trim();
-        if (name.isNotEmpty) map[id] = name;
       }
       if (!mounted) return;
       setState(() => _creatorNameById.addAll(map));
