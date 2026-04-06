@@ -142,12 +142,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final title = (m['title'] ?? '').toString().toLowerCase();
       final description = (m['description'] ?? '').toString().toLowerCase();
       final id = (m['id'] ?? '').toString().toLowerCase();
+      final creatorId = (m['creator_id'] ?? '').toString();
+      final creatorName =
+          (_creatorNameById[creatorId] ?? _creatorLabel(creatorId))
+              .toLowerCase();
       final mixGenres = _genresForMixtape(m)
           .map((g) => g.toLowerCase())
           .join(' ');
       return title.contains(query) ||
           description.contains(query) ||
           id.contains(query) ||
+          creatorName.contains(query) ||
           mixGenres.contains(query);
     }).toList();
 
@@ -312,7 +317,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                  hintText: 'Search title, description, or mixtape ID...',
+                  hintText: 'Search title, description, username, or mixtape ID...',
                   hintStyle: GoogleFonts.outfit(color: Colors.white38),
                   prefixIcon: const Icon(Icons.search, color: Colors.white38),
                   suffixIcon: _controller.text.trim().isEmpty
